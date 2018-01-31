@@ -12,6 +12,7 @@ import jo.ar.gen.data.PlanetBean;
 import jo.ar.gen.data.StarBean;
 import jo.util.utils.obj.BooleanUtils;
 import jo.util.utils.obj.IntegerUtils;
+import jo.util.utils.xml.XMLEditUtils;
 import jo.util.utils.xml.XMLUtils;
 
 public class IOLogic
@@ -48,6 +49,7 @@ public class IOLogic
                 planet.setSkyColor(readString(p, "skyColor", null));
                 planet.setFogColor(readString(p, "fogColor", null));
                 planet.setAtmosphereDensity(readInteger(p, "atmosphereDensity", 100));
+                planet.setGravitationalMultiplier(readInteger(p, "gravitationalMultiplier", 100));
                 planet.setOrbitalDistance(readInteger(p, "orbitalDistance", 100));
                 planet.setOrbitalTheta(readInteger(p, "orbitalTheta", 0));
                 planet.setOrbitalPhi(readInteger(p, "orbitalPhi", 0));
@@ -70,6 +72,90 @@ public class IOLogic
             }
         }
         return galaxy;
+    }
+    
+    public static void writePlanetDefs(GalaxyBean galaxy, File planetDefsFile) throws IOException
+    {
+        Document doc = XMLUtils.newDocument();
+        Node g = XMLEditUtils.addElement(doc, "galaxy");
+        for (StarBean star : galaxy.getStars())
+        {
+            Node s = XMLEditUtils.addElement(g, "star");
+            writeAttrString(s, "name", star.getName());
+            writeAttrInt(s, "x", star.getX(), 999999);
+            writeAttrInt(s, "y", star.getY(), 999999);
+            writeAttrInt(s, "temp", star.getTemp(), 100);
+            writeAttrInt(s, "numPlanets", star.getNumPlanets(), 0);
+            writeAttrInt(s, "numGasGiants", star.getNumGasGiants(), 0);
+            for (PlanetBean planet : star.getPlanets())
+            {
+                Node p = XMLEditUtils.addElement(s, "planet");
+                writeAttrString(p, "name", planet.getName());
+                writeAttrInt(p, "DIMID", planet.getDimId(), 0);
+                writeAttrInt(p, "dimMapping", planet.getDimMapping(), 0);
+                writeAttrString(p, "customIcon", planet.getCustomIcon());
+                writeBoolean(p, "isKnown", planet.isKnown(), false);
+                writeBoolean(p, "hasRings", planet.isRings(), false);
+                writeBoolean(p, "GasGiant", planet.isGasGiant(), false);
+                for (String gas : planet.getGas())
+                    XMLEditUtils.addTextTag(p, "gas", gas);
+                writeEleString(p, "skyColor", planet.getSkyColor());
+                writeEleString(p, "fogColor", planet.getFogColor());
+                writeEleInt(p, "atmosphereDensity", planet.getAtmosphereDensity(), 100);
+                writeEleInt(p, "gravitationalMultiplier", planet.getGravitationalMultiplier(), 100);
+                writeEleInt(p, "orbitalDistance", planet.getOrbitalDistance(), 100);
+                writeEleInt(p, "orbitalTheta", planet.getOrbitalTheta(), 0);
+                writeEleInt(p, "orbitalPhi", planet.getOrbitalPhi(), 0);
+                writeEleInt(p, "rotationalPeriod", planet.getRotationalPeriod(), 24000);
+                writeEleString(p, "biomeIds", planet.getBiomeIds());
+                for (String a : planet.getArtifacts())
+                    XMLEditUtils.addTextTag(p, "artifact", a);
+                if (planet.getOres().size() > 0)
+                {
+                    Node os = XMLEditUtils.addElement(p, "OreGen");
+                    for (OreBean ore : planet.getOres())
+                    {
+                        Node o = XMLEditUtils.addElement(os, "ore");
+                        writeAttrString(o, "block", ore.getBlock());
+                        writeAttrInt(o, "meta", ore.getMeta(), 0);
+                        writeAttrInt(o, "mminHeighteta", ore.getMinHeight(), 0);
+                        writeAttrInt(o, "maxHeight", ore.getMaxHeight(), 0);
+                        writeAttrInt(o, "clumpSize", ore.getClumpSize(), 0);
+                        writeAttrInt(o, "chancePerChunk", ore.getChancePerChunk(), 0);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void writeAttrString(Node n, String name, String val)
+    {
+        if (val != null)
+            XMLEditUtils.addAttribute(n, name, val);
+    }
+
+    private static void writeEleString(Node n, String name, String val)
+    {
+        if (val != null)
+            XMLEditUtils.addTextTag(n, name, val);
+    }
+
+    private static void writeEleInt(Node n, String name, int val, int def)
+    {
+        if (val != def)
+            XMLEditUtils.addTextTag(n, name, String.valueOf(val));
+    }
+    
+    private static void writeAttrInt(Node n, String name, int val, int def)
+    {
+        if (val != def)
+            XMLEditUtils.addAttribute(n, name, String.valueOf(val));
+    }
+    
+    private static void writeBoolean(Node n, String name, boolean val, boolean def)
+    {
+        if (val != def)
+            XMLEditUtils.addTextTag(n, name, val ? "True" : "False");            
     }
     
     private static boolean readBoolean(Node n, String name, boolean def)
