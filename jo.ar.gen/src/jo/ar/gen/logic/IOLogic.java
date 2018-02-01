@@ -11,6 +11,7 @@ import jo.ar.gen.data.OreBean;
 import jo.ar.gen.data.PlanetBean;
 import jo.ar.gen.data.StarBean;
 import jo.util.utils.obj.BooleanUtils;
+import jo.util.utils.obj.DoubleUtils;
 import jo.util.utils.obj.IntegerUtils;
 import jo.util.utils.xml.XMLEditUtils;
 import jo.util.utils.xml.XMLUtils;
@@ -31,6 +32,7 @@ public class IOLogic
             star.setX(IntegerUtils.parseInt(XMLUtils.getAttribute(s, "x")));
             star.setY(IntegerUtils.parseInt(XMLUtils.getAttribute(s, "y")));
             star.setTemp(IntegerUtils.parseInt(XMLUtils.getAttribute(s, "temp")));
+            star.setSize(DoubleUtils.parseDouble(XMLUtils.getAttribute(s, "size")));
             star.setNumPlanets(IntegerUtils.parseInt(XMLUtils.getAttribute(s, "numPlanets")));
             star.setNumGasGiants(IntegerUtils.parseInt(XMLUtils.getAttribute(s, "numGasGiants")));
             for (Node p : XMLUtils.findNodes(s, "planet"))
@@ -76,6 +78,12 @@ public class IOLogic
     
     public static void writePlanetDefs(GalaxyBean galaxy, File planetDefsFile) throws IOException
     {
+        Document doc = writePlanetDefsToXML(galaxy);
+        XMLUtils.writeFile(doc, planetDefsFile);
+    }
+    
+    public static Document writePlanetDefsToXML(GalaxyBean galaxy)
+    {
         Document doc = XMLUtils.newDocument();
         Node g = XMLEditUtils.addElement(doc, "galaxy");
         for (StarBean star : galaxy.getStars())
@@ -84,9 +92,10 @@ public class IOLogic
             writeAttrString(s, "name", star.getName());
             writeAttrInt(s, "x", star.getX(), 999999);
             writeAttrInt(s, "y", star.getY(), 999999);
-            writeAttrInt(s, "temp", star.getTemp(), 100);
-            writeAttrInt(s, "numPlanets", star.getNumPlanets(), 0);
-            writeAttrInt(s, "numGasGiants", star.getNumGasGiants(), 0);
+            writeAttrInt(s, "temp", star.getTemp(), -1);
+            XMLEditUtils.addAttribute(s, "size", String.valueOf(star.getSize()));
+            writeAttrInt(s, "numPlanets", star.getNumPlanets(), -1);
+            writeAttrInt(s, "numGasGiants", star.getNumGasGiants(), -1);
             for (PlanetBean planet : star.getPlanets())
             {
                 Node p = XMLEditUtils.addElement(s, "planet");
@@ -126,6 +135,7 @@ public class IOLogic
                 }
             }
         }
+        return doc;
     }
 
     private static void writeAttrString(Node n, String name, String val)
